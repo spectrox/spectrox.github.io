@@ -1,0 +1,30 @@
+---
+layout: post
+status: publish
+published: true
+title: iFraming on the fly
+author_login: spectrox
+wordpress_id: 20
+wordpress_url: http://spectrox.ru/?p=20
+date: '2011-02-25 23:47:49 -0600'
+date_gmt: '2011-02-25 20:47:49 -0600'
+permalink: '/blog/iframing-on-the-fly/'
+---
+<p>Давно слышал о проблемах с созданием динамических iframe и заполнении их содержимым, но посмотреть что и как самому всё никак не доходили руки, теперь же, по причинам связанным с не приходящим сном, я эту тему затрону.</p>
+<p>Для примера я набросал <a href="http://devel.oxeed.ru/examples/frame.html">простую страничку</a> создающую iframe по клику мыши. Изначально я записал всё одной функцией выполняющейся в один поток, но результата никакого небыло, решение было найдено - собственно участок кода, в котором происходит редактирование iframe я записал в функцию setTimeout, тем самым вынес его в отдельный поток выполнения:</p>
+<p><code>setTimeout(function(){<br />
+        //редактируем iframe;<br />
+    },0);</code></p>
+<p>После чего код начал работать. Буквально пару часов спустя, я показал описанное выше @chaos_8 и он разъяснил, что суть не в вызове setTimeout(), а в том, что после создания iframe нужно дождаться события onload (как и при работе с объектом Image).</p>
+<p>Получившийся исходный код:</p>
+<p><code>function start() {<br />
+    var fB = document.getElementById('frame_block');<br />
+    var frame = document.createElement('iframe');<br />
+    frame.setAttribute('width','640');<br />
+    frame.setAttribute('height','480');<br />
+    frame.onload = function() {<br />
+        var doc = frame.contentWindow.document;<br />
+        doc.body.innerHTML = 'Test it';<br />
+    }<br />
+    fB.appendChild(frame);<br />
+}</code></p>

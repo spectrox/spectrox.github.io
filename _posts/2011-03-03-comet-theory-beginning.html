@@ -1,0 +1,148 @@
+---
+layout: post
+status: publish
+published: true
+title: Реализация Comet в среде php+javascript
+author_login: spectrox
+wordpress_id: 42
+wordpress_url: http://spectrox.ru/?p=42
+date: '2011-03-03 15:18:26 -0600'
+date_gmt: '2011-03-03 12:18:26 -0600'
+permalink: '/blog/comet-theory-beginning/'
+---
+<p>Ну что ж, сказано &mdash; сделано. В этой статье я расскажу, что из себя представляет Comet и рассмотрю реализацию простой схемы с помощью PHP и JavaScript.</p>
+<p>Для начала, <a href="http://ru.wikipedia.org/wiki/Comet" target="_blank">Comet</a> это что-то вроде теории о создания постоянного соединения между клиентом и сервером в универсальной среде, в общем без привязки к какому-то определённому языку программирования.</p>
+<p>При инициализации клиент открывает соединение с сервером и повисает в таком состоянии, когда на сервере появляются какие-то новые данные он отправляет их по этому соединению клиенту.</p>
+<p>Для того, чтобы реализовать подобную вещь на JavaScript нужно учесть, что работа ведётся, через <a href="http://ru.wikipedia.org/wiki/AJAX" target="_blank">AJAX</a> по протоколу HTTP. На сервере же предположительно установлен веб-сервер Apache.</p>
+<p><em>В условиях AJAX-запросов, после отправки данных сервер закрывает  соединение, клиент обрабатывает данные, открывает соединение заново и  ждёт новую порцию данных.</em></p>
+<h2>Особенности</h2>
+<p>На стороне клиента необходимо открыть соединение с достаточно большим таймаутом, после срабатыания этого таймаута необходимо открыть соединение повторно и так каждый раз при обрыве соединения.</p>
+<p><code>// javascript class, connection manager<br />
+this.connection = function() {<br />
+        self.comet = $.ajax({<br />
+            type: "GET",<br />
+            url:  "backend.php",<br />
+            data: {'id':self.last},<br />
+            dataType: "text",<br />
+            timeout: self.timeout*1000,<br />
+            success: self.parseData,<br />
+            error: function(){<br />
+                // something wrong. but setInterval will set up connection automatically<br />
+                setTimeout(self.connection,1000);<br />
+            }<br />
+        });<br />
+    }<br />
+this.init = function() {<br />
+        //setInterval(self.connection,self.timeout*1000);<br />
+        self.connection();<br />
+    }<br />
+this.init();</code></p>
+<p>В JavaScript все таймауты указываются в миллисекундах, поэтому мы их умножаем на тысячу.</p>
+<p>На сервере рекомендую поставить max_execution_time в значение равное таймауту клиента. В самом скрипте нужно организовать вечный цикл, с регулярной проверкой данных для отправки.</p>
+<p><code>// simple infinite loop in php<br />
+while (time()-$time<$limit) {<br />
+    // checking if something new was added to my test table<br />
+    $res = mysql_query('SELECT * FROM `comet` WHERE `id`>"'.$last_id.'" ORDER BY `id` ASC');<br />
+    if (mysql_num_rows($res)) {<br />
+        while ($item=mysql_fetch_array($res)) {<br />
+            echo 'self.putMessage("'.$item['id'].'","'.escape($item['name']).'","'.escape($item['text']).'");';<br />
+        }<br />
+        flush();<br />
+        exit;<br />
+    }<br />
+    sleep(5);<br />
+}</code></p>
+<h2>Реализация</h2>
+<p>Я напишу всё с использованием библиотеки jQuery. Итак, javascript:</p>
+<p><code>function Messanger() {<br />
+    this.last = 0;<br />
+    this.timeout = 360;<br />
+    this.comet = 0;<br />
+    var self = this;<br />
+    this.putMessage = function(id,name,text) {<br />
+        // callback, добавляет сообщения на страницу, вызывается из полученных с сервера данных<br />
+        self.last = id;<br />
+        var b = document.createElement('div');<br />
+        b.innerHTML = '<span style="color: red;">'+name+'</span> '+text;<br />
+        $('#messages').append(b);<br />
+    }<br />
+    this.parseData = function(message) {<br />
+        // простая обработка данных полученных с сервера, разбиваем строки и выполняет функции<br />
+        var items = message.split(';');<br />
+        if (items.length<1) return false;<br />
+        for (var i=0;i<items.length;i++) {<br />
+            eval(items[i]);<br />
+        }<br />
+        setTimeout(self.connection,1000);<br />
+    }<br />
+    this.connection = function() {<br />
+        // здесь открывается соединение с сервером<br />
+        self.comet = $.ajax({<br />
+                type: "GET",<br />
+                url:  "backend.php",<br />
+                data: {'id':self.last},<br />
+                dataType: "text",<br />
+                timeout: self.timeout*1000,<br />
+                success: self.parseData,<br />
+                error: function(){<br />
+                    // something wrong. but setInterval will set up connection automatically<br />
+                    setTimeout(self.connection,1000);<br />
+               }<br />
+            });<br />
+    }<br />
+    this.init = function() {<br />
+        //setInterval(self.connection,self.timeout*1000);<br />
+        self.connection();<br />
+    }<br />
+    this.init();<br />
+}<br />
+function sendMessage() {<br />
+    // callback формы, для отправки сообщений на сервер<br />
+    if ($('#name').val()&&$('#text').val()) {<br />
+        var data = {<br />
+                name: $('#name').val(),<br />
+                text: $('#text').val()<br />
+            }<br />
+        $.post('add_new.php',data);<br />
+    } else {<br />
+        alert('Please fill the fields');<br />
+    }<br />
+}<br />
+$(document).ready(function(){<br />
+    // инициализация<br />
+    var msg = new Messanger();<br />
+});</code></p>
+<p>И PHP скрипт, отправляющий данные:</p>
+<p><code><?<br />
+// number of second the script allowed to run. setting to 6 minutes<br />
+$limit = 360;<br />
+$time = time();</p>
+<p>// getting last loaded value<br />
+$last_id = (int)$_GET['id'];</p>
+<p>// just to be sure that script will be killed<br />
+set_time_limit($limit+5);</p>
+<p>mysql_connect('localhost','user','password');<br />
+mysql_select_db('database');</p>
+<p>function escape($str) {<br />
+    return str_replace('"','\"',$str);<br />
+}</p>
+<p>// цикл, проверяющий новые сообщения каждые 5 секунд<br />
+while (time()-$time<$limit) {<br />
+    // checking if something new was added to my test table<br />
+    $res = mysql_query('SELECT * FROM `comet` WHERE `id`>"'.$last_id.'" ORDER BY `id` ASC');<br />
+    if (mysql_num_rows($res)) {<br />
+        while ($item=mysql_fetch_array($res)) {<br />
+            // пишем js-скрипт, который выполнится у клиента<br />
+            echo 'self.putMessage("'.$item['id'].'","'.escape($item['name']).'","'.escape($item['text']).'");';<br />
+        }<br />
+        // выбрасываем все данные и выходим, чтобы клиент смог их обработать<br />
+        flush();<br />
+        exit;<br />
+    }<br />
+    // если данных нет - ждём 5 секунд<br />
+    sleep(5);<br />
+}</p>
+<p>mysql_close();<br />
+?></code></p>
+<p>Мы получили фронтенд на JavaScript, который отправляет запросы на сервер в ожидании новых данных, сервер каждые 5 секунд проверяет не появились ли данные, когда появляются - он их отправляет клиенту и закрывает соединение. После этого клиент снова открывает соединение и всё повторяется. Если данных не поступило и сработал таймаут - клиент просто открывает соединение заново.</p>
+<p>Обратите внимание, что и в классе на JS и в скрипте PHP задан таймаут, это сделано, чтобы избежать создание мёртвых процессов, одинаковые таймауты в теории должны поддерживать нагрузку сервера на минимуме.</p>

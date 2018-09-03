@@ -1,0 +1,20 @@
+---
+layout: post
+status: publish
+published: true
+title: JavaScript Singleton Pattern
+author_login: spectrox
+wordpress_id: 134
+wordpress_url: http://spectrox.ru/?p=134
+date: '2012-03-30 20:42:47 -0500'
+date_gmt: '2012-03-30 17:42:47 -0500'
+permalink: '/blog/javascript-singleton-pattern/'
+---
+<p>В этой статье речь пойдёт о реализации шаблона проектирования Singleton в языке JavaScript.</p>
+<p>Многие думают, что JavaScript &mdash; очень простой в изучении язык с небольшим количеством не менее простых конструкций. Давайте развеем этот миф и взглянем на предоставляемый им функционал.</p>
+<p>Итак, я предлагаю вашему вниманию 2 способа реализации данного шаблона:</p>
+<ul>
+<li>Создание глобальной переменной для хранения объекта и анонимной функции, в области видимости которой будет объявлен сам singleton и его instance.</li>
+<li>Создание функции, в свойстве которой и будет сохранён её единственный instance.</li>
+</ul>
+<p><script src="https://gist.github.com/2253164.js"> </script></p>
