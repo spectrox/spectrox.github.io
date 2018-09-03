@@ -1,0 +1,131 @@
+---
+layout: full-page
+status: publish
+published: true
+title: Перечёркнутый текст / Strikethrough text
+author_login: spectrox
+wordpress_id: 8
+wordpress_url: http://spectrox.ru/?page_id=8
+date: '2011-02-25 19:48:50 -0600'
+date_gmt: '2011-02-25 19:48:50 -0600'
+---
+<style type="text/css">
+html, body, table, tr, td {
+	height:100%;
+	vertical-align:middle;
+}
+
+body {
+	background:#000;
+	color:#eee;
+	font-family:tahoma,verdana,georgia,times new roman,arial;
+	font-size:13px;
+	margin:0;
+	overflow:hidden;
+	padding:0;
+	text-align:center;
+}
+
+table {
+	width:100%;
+}
+
+.wrapper {
+	margin:0 auto;
+	width:960px;
+}
+
+.left {
+	float:left;
+	text-align:left;
+	width:40%;
+}
+
+.right {
+	float:right;
+	text-align:right;
+	width:40%;
+}
+
+.middle {
+	margin:0 auto;
+	text-align:center;
+	width:10%;
+}
+
+.wrapper textarea {
+	border:1px solid #666;
+	font-family:tahoma,verdana,arial;
+	font-size:13px;
+	height:120px;
+	padding:5px;
+	width:98%;
+}
+
+.wrapper input {
+	background:none;
+	border:0;
+	color:#eee;
+	cursor:pointer;
+	font-family:tahoma,verdana,arial;
+	font-size:72px;
+	margin-top:20px;
+}
+
+.copyrights {
+	bottom:10px;
+	font-size:11px;
+	position:absolute;
+	right:10px;
+}
+
+.copyrights a {
+	color:#666;
+	text-decoration:none;
+}
+
+.copyrights a:hover, .copyrights a:focus {
+	color:#999;
+	text-decoration:none;
+}
+</style>
+<script type="text/javascript">
+//<![CDATA[
+
+var strikethrough = function() {
+	var input = document.getElementById('input');
+	var output = document.getElementById('output');
+	var result = '\u0336';
+	for (var i=0;i<input.value.length;i++) {
+		result += input.value.charAt(i)+'\u0336';
+	}
+	output.value = result;
+}
+
+//]]>
+</script>
+<table>
+	<tr>
+		<td id="results">
+			<div class="wrapper">
+				<h1>Перечёркнутый текст</h1>
+				<p>Перечёркнутый текст для социальных сетей вконтакте, твиттер, фейсбук. Введите текст для перечёркивания в левое окно и нажмите кнопку "&raquo;"</p><br/>
+				<form onsubmit="strikethrough();return false;">
+					<div>
+						<div class="left">
+							<textarea id="input"></textarea>
+						</div>
+						<div class="right">
+							<textarea id="output"></textarea>
+						</div>
+						<div class="middle">
+							<input type="submit" value="&raquo;"/>
+						</div>
+					</div>
+				</form><br/><br/>
+				<h1>Хотите больше?</h1>
+				<p>Перечеркнуть, подчеркнуть, перевернуть и транслитерировать текст <a href="http://4txt.ru" target="_blank">теперь можно здесь</a>! Добавляйте в закладки :)</p>
+			</div>
+		</td>
+	</tr>
+</table>
